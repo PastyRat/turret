@@ -42,7 +42,7 @@ center_y = HEIGHT // 2
 # Grid settings
 grid_spacing = 40  # pixels between grid lines
 selected_point = None  # stored as (grid_x, grid_y)
-pan_speed = 10  # pixels to move the viewport per key press
+pan_speed = 5  # pixels to move the viewport per key press
 
 # Font for text
 font_small = pygame.font.Font(None, 24)
@@ -61,8 +61,9 @@ def grid_to_pixel(grid_x, grid_y):
     pixel_y = center_y - grid_y * grid_spacing
     return pixel_x, pixel_y
 
-def draw_background(background, backgroundrect):
-    screen.blit(background, backgroundrect)
+def draw_background(background):
+    bg_rect = background.get_rect(center=(center_x, center_y))
+    screen.blit(background, bg_rect)
 
 def query_strength():
     correct = False
@@ -186,20 +187,24 @@ def main():
                     # So we can query on the next draw, so we can see coords at the same time as popup
                     queryonnextdraw = True
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
+        x_min = WIDTH // 2 - 12 * grid_spacing
+        x_max = WIDTH // 2 + 12 * grid_spacing
+        y_min = HEIGHT // 2 - 12 * grid_spacing
+        y_max = HEIGHT // 2 + 12 * grid_spacing
+        if keys[pygame.K_w] and center_y + pan_speed <= y_max:
             center_y += pan_speed
-        if keys[pygame.K_s]:
+        if keys[pygame.K_s] and center_y - pan_speed >= y_min:
             center_y -= pan_speed
-        if keys[pygame.K_a]:
+        if keys[pygame.K_a] and center_x + pan_speed <= x_max:
             center_x += pan_speed
-        if keys[pygame.K_d]:
+        if keys[pygame.K_d] and center_x - pan_speed >= x_min:
             center_x -= pan_speed
 
         # Clear screen
         screen.fill(WHITE)
         
         # Draw everything
-        draw_background(background, backgroundrect)
+        draw_background(background)
         draw_grid()
         draw_labels()
         draw_selected_point()
