@@ -21,14 +21,26 @@ pygame.display.set_caption("Select point to fire at")
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GRAY = (200, 200, 200)
-LIGHT_GRAY = (230, 230, 230)
+GREY = (200, 200, 200)
+LIGHT_GREY = (230, 230, 230)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 200, 0)
 
 # Import background image
-background = pygame.image.load("background.png")
+# Check if we have the real background image, if not use placeholder
+try:
+    file = open("background.png", "r") 
+except FileNotFoundError:
+    useplaceholder = True
+else:
+    useplaceholder = False
+    file.close()
+
+if useplaceholder == True:
+    background = pygame.image.load("testbackground.png")
+else:
+    background = pygame.image.load("background.png")
 backgroundrect = background.get_rect()
 
 # Clock for FPS
@@ -38,6 +50,8 @@ fps = 60
 # Center of the screen (0, 0 in our coordinate system)
 center_x = WIDTH // 2
 center_y = HEIGHT // 2
+background_offset_x = 0
+background_offset_y = 0
 
 # Grid settings
 grid_spacing = 40  # pixels between grid lines
@@ -62,7 +76,7 @@ def grid_to_pixel(grid_x, grid_y):
     return pixel_x, pixel_y
 
 def draw_background(background):
-    bg_rect = background.get_rect(center=(center_x, center_y))
+    bg_rect = background.get_rect(center=(center_x + background_offset_x, center_y + background_offset_y))
     screen.blit(background, bg_rect)
 
 def query_strength():
@@ -94,23 +108,23 @@ def draw_grid():
     # Draw vertical lines
     x = center_x
     while x < WIDTH:
-        pygame.draw.line(screen, LIGHT_GRAY, (x, 0), (x, HEIGHT), 1)
+        pygame.draw.line(screen, LIGHT_GREY, (x, 0), (x, HEIGHT), 1)
         x += grid_spacing
     
     x = center_x
     while x > 0:
-        pygame.draw.line(screen, LIGHT_GRAY, (x, 0), (x, HEIGHT), 1)
+        pygame.draw.line(screen, LIGHT_GREY, (x, 0), (x, HEIGHT), 1)
         x -= grid_spacing
     
     # Draw horizontal lines
     y = center_y
     while y < HEIGHT:
-        pygame.draw.line(screen, LIGHT_GRAY, (0, y), (WIDTH, y), 1)
+        pygame.draw.line(screen, LIGHT_GREY, (0, y), (WIDTH, y), 1)
         y += grid_spacing
     
     y = center_y
     while y > 0:
-        pygame.draw.line(screen, LIGHT_GRAY, (0, y), (WIDTH, y), 1)
+        pygame.draw.line(screen, LIGHT_GREY, (0, y), (WIDTH, y), 1)
         y -= grid_spacing
     
     # Draw X and Y axes (thicker, darker lines)
@@ -165,13 +179,13 @@ def draw_selected_point():
         screen.blit(coord_text, (10, 10))
         
         # Display pixel coordinates (for reference)
-        pixel_text = font_small.render(f"Pixels: ({int(pixel_x)}, {int(pixel_y)})", True, GRAY)
+        pixel_text = font_small.render(f"Pixels: ({int(pixel_x)}, {int(pixel_y)})", True, GREY)
         screen.blit(pixel_text, (10, 45))
 
 def main():
     global selected_point
     global queryonnextdraw
-    global center_x, center_y
+    global center_x, center_y, background_offset_x, background_offset_y
     
     running = True
     while running:
@@ -187,10 +201,12 @@ def main():
                     # So we can query on the next draw, so we can see coords at the same time as popup
                     queryonnextdraw = True
         keys = pygame.key.get_pressed()
+        # Maximum limits for panning the grid to only allow up to 20m
         x_min = WIDTH // 2 - 12 * grid_spacing
         x_max = WIDTH // 2 + 12 * grid_spacing
         y_min = HEIGHT // 2 - 12 * grid_spacing
         y_max = HEIGHT // 2 + 12 * grid_spacing
+        # Pan the grid with WASD keys
         if keys[pygame.K_w] and center_y + pan_speed <= y_max:
             center_y += pan_speed
         if keys[pygame.K_s] and center_y - pan_speed >= y_min:
@@ -199,9 +215,18 @@ def main():
             center_x += pan_speed
         if keys[pygame.K_d] and center_x - pan_speed >= x_min:
             center_x -= pan_speed
+        # Pan the background with arrow keys
+        if keys[pygame.K_UP]:
+            background_offset_y += pan_speed
+        if keys[pygame.K_DOWN]:
+            background_offset_y -= pan_speed
+        if keys[pygame.K_LEFT]:
+            background_offset_x += pan_speed
+        if keys[pygame.K_RIGHT]:
+            background_offset_x -= pan_speed
 
         # Clear screen
-        screen.fill(WHITE)
+        screen.fill(GREY)
         
         # Draw everything
         draw_background(background)
@@ -210,7 +235,9 @@ def main():
         draw_selected_point()
         
         # Instructions
-        instructions = font_small.render("Click to select a point. Use W/A/S/D to pan the view. Close window to continue.", True, BLACK)
+        instructions = font_small.render("Click to select a point and close the window to continue.", True, BLACK)
+        instructions2 = font_small.render("Use WASD to pan the grid and arrow keys to pan the background.", True, BLACK)
+        screen.blit(instructions2, (10, HEIGHT - 50))
         screen.blit(instructions, (10, HEIGHT - 30))
         
         pygame.display.flip()

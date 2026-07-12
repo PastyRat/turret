@@ -32,10 +32,10 @@ def solve(coordinateX, coordinateZ, strength, displacement):
                 N2=N2+1
         if N1!=0:
             Angle1=T1/N1
-            print("one angle is ",Angle1)
+            #print("one angle is ",Angle1)
         if N2!=0:
             Angle2=T2/N2
-            print("one angle is",Angle2)
+            #print("one angle is",Angle2)
         else:
             Angle2 = 0
         if N2 == 0 and N1 ==0:
