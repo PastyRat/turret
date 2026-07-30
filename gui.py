@@ -32,15 +32,10 @@ GREEN = (0, 200, 0)
 try:
     file = open("background.png", "r") 
 except FileNotFoundError:
-    useplaceholder = True
-else:
-    useplaceholder = False
-    file.close()
-
-if useplaceholder == True:
     background = pygame.image.load("testbackground.png")
 else:
     background = pygame.image.load("background.png")
+    file.close()
 backgroundrect = background.get_rect()
 
 # Clock for FPS
@@ -104,7 +99,6 @@ def query_displacement():
     return user_input
 
 def draw_grid():
-    """Draw the coordinate grid"""
     # Draw vertical lines
     x = center_x
     while x < WIDTH:
@@ -201,7 +195,7 @@ def main():
                     # So we can query on the next draw, so we can see coords at the same time as popup
                     queryonnextdraw = True
         keys = pygame.key.get_pressed()
-        # Maximum limits for panning the grid to only allow up to 20m
+        # Maximum limits for panning the grid to only allow up to 20m 
         x_min = WIDTH // 2 - 12 * grid_spacing
         x_max = WIDTH // 2 + 12 * grid_spacing
         y_min = HEIGHT // 2 - 12 * grid_spacing
