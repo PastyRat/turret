@@ -74,11 +74,41 @@ def draw_background(background):
     bg_rect = background.get_rect(center=(center_x + background_offset_x, center_y + background_offset_y))
     screen.blit(background, bg_rect)
 
+def query_option():
+    # Create dialog window
+        dialog = tk.Toplevel(root)
+        dialog.title("Choose an angle")
+        dialog.geometry("300x150")
+    
+        result = [None]
+    
+        tk.Label(dialog, text="Pick an option:").pack(pady=10)
+    
+        tk.Button(dialog, text=str("Use extension to find angle"), width=30, 
+              command=lambda: [result.__setitem__(0, 0), dialog.destroy()]).pack(pady=5)
+        tk.Button(dialog, text=str("Use angle to find extension"), width=30, 
+              command=lambda: [result.__setitem__(0, 1), dialog.destroy()]).pack(pady=5)
+    
+        root.wait_window(dialog)
+        return result[0]
+
 def query_strength():
     correct = False
     while correct == False:
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the extension of the elastic band in meters"))
+        except ValueError:
+            # Yeah, I cba to create a new window to show an exception - to do later
+            pass
+        else:
+            correct = True
+    return user_input
+
+def query_angle():
+    correct = False
+    while correct == False:
+        try:
+            user_input = float(simpledialog.askstring("Input", "Enter the angle that you want to fire the turret at"))
         except ValueError:
             # Yeah, I cba to create a new window to show an exception - to do later
             pass
@@ -237,15 +267,22 @@ def main():
         pygame.display.flip()
         if queryonnextdraw == True:
             time.sleep(0.1)
+            answer = query_option()
             global strength
-            strength = query_strength()
+            global angle
+            if answer == 0:
+                strength = query_strength()
+                angle = True
+            else:
+                angle = query_angle()
+                strength = True
             global displacement
             displacement = query_displacement()
             queryonnextdraw = False
     root.destroy()
     pygame.quit()
     if __name__ != "__main__": # Allows the function to return a value when called from another .py
-        list = [grid_x, grid_y, strength, displacement]
+        list = [grid_x, grid_y, strength, angle, displacement]
         return list
 
 # Testing purposes

@@ -10,14 +10,19 @@ g= 9.81
 tolerance=0.003
 global Angle1
 global Angle2
-def solve(coordinateX, coordinateZ, strength, displacement):
+def solve(coordinateX, coordinateZ, strength, angle, displacement):
     #coordinateX = float(input("enter x: "))
     #coordinateZ = float(input("enter z: "))
     #h = float(input("enter displacement: "))
     h = displacement
     #Decision = int(input("input band distance and find angle or input angle and find band distance? 1 or 2: "))
-    Decision = 1
-    solution = aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength)
+    if angle == True:
+        Decision = 1
+    elif strength == True:
+        Decision = 2
+    else:
+        print("error - no decision made/invalid values")
+    solution = aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, angle, strength)
     if Decision == 1:
         T1 =0
         N1=0
@@ -40,13 +45,14 @@ def solve(coordinateX, coordinateZ, strength, displacement):
             Angle2 = 0
         if N2 == 0 and N1 ==0:
             print("no solution")
+        return [Angle1, Angle2]
     if Decision ==2:
         x = solution
         if x <=0.5:
-            print("band extension needed is",x)
+            #print("band extension needed is",x)
+            return x
         else:
             print("no solution within range")
-    return [Angle1, Angle2]
 def model(p,C,A,a,m,k,x,u,h,g):
     s = 0
     V0 = 0
@@ -77,7 +83,7 @@ def model(p,C,A,a,m,k,x,u,h,g):
         s = D*interval +s
     return s
 
-def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
+def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, selectedangle, strength):
     global x
     global a
     if Decision == 1:
@@ -97,7 +103,7 @@ def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
         return List
        
     else:
-        a = math.radians(float(input("enter angle of launch: ")))
+        a = math.radians(float(selectedangle))
         Displacement = (coordinateX**2+coordinateZ**2)**(1/2)
         x1 = 0
         x2 = 0.5
