@@ -1,6 +1,7 @@
 import gui
 import logic
 import querygui
+import send
 
 # Run GUI and get values
 chosenvals = gui.main()
@@ -17,6 +18,9 @@ print(coordy)
 print(strength)
 print(angle)
 print(displacement)
+
+xzangle = logic.find_xzangle(coordx, coordy)
+print("The angle in the xz plane is", xzangle)
 
 # Logic
 calculatedvals = logic.solve(coordx, coordy, strength, angle, displacement)
@@ -35,3 +39,8 @@ else:
     else:
         finalangle = calculatedvals[0]
     print("Angle to be fired at is", finalangle)
+    print("Sending values to Arduino...")
+    send.send(xzangle, finalangle)
+
+# If you need to use the extension value, you will need to modify the send function to accept that value and send it to the Arduino. 
+# eg: send.send(xzangle, finalangle, extension)

@@ -10,6 +10,12 @@ g= 9.81
 tolerance=0.003
 global Angle1
 global Angle2
+def find_xzangle(coordinateX, coordinateZ):
+    angle = math.degrees(math.atan(coordinateZ/coordinateX))
+    if coordinateZ < 0:
+        angle = angle + 180
+    return angle
+
 def solve(coordinateX, coordinateZ, strength, angle, displacement):
     #coordinateX = float(input("enter x: "))
     #coordinateZ = float(input("enter z: "))

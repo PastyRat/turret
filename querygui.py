@@ -14,9 +14,9 @@ def choicebetweenangles(angle1, angle2):
 
     tk.Label(dialog, text="Select an angle to fire at:").pack(pady=10)
 
-    tk.Button(dialog, text=str(angle1), width=15, 
+    tk.Button(dialog, text=str(round(angle1, 3)), width=15, 
           command=lambda: [result.__setitem__(0, angle1), dialog.destroy()]).pack(pady=5)
-    tk.Button(dialog, text=str(angle2), width=15, 
+    tk.Button(dialog, text=str(round(angle2, 3)), width=15, 
           command=lambda: [result.__setitem__(0, angle2), dialog.destroy()]).pack(pady=5)
 
     root.wait_window(dialog)
