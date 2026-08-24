@@ -3,6 +3,11 @@ import logic
 import querygui
 import send
 
+# Connect to the arduino
+if send.startconnection() == 0:
+    print("Stopping program")
+    exit()
+
 # Run GUI and get values
 chosenvals = gui.main()
 
@@ -20,7 +25,7 @@ print(angle)
 print(displacement)
 
 xzangle = logic.find_xzangle(coordx, coordy)
-print("The angle in the xz plane is", xzangle)
+print("The angle in the 2d plane is", xzangle)
 
 # Logic
 calculatedvals = logic.solve(coordx, coordy, strength, angle, displacement)

@@ -1,18 +1,21 @@
 import serial
 import time
 
-stopexec = False
-# Change COM3 to whatever your Arduino shows up as
-try:
-    arduino = serial.Serial('COM3', 9600, timeout=1)
-    time.sleep(2)
-except serial.SerialException as e:
-    print(f"Error connecting to Arduino: {e}")
-    stopexec = True
+arduino = None
+
+# Start connection to Arduino and stop program if we can't
+def startconnection():
+    global arduino
+    try:
+        arduino = serial.Serial('COM3', 9600, timeout=1)
+        time.sleep(2)
+        return 1
+    except serial.SerialException as e:
+        print(f"Error connecting to Arduino: {e}")
+        return 0
+
 
 def send(xzangle, finalangle):
-    if stopexec == True:
-        return
     # Send the angles to the Arduino
     arduino.write(f"{xzangle},{finalangle}".encode())
     print(f"Sent angles: {xzangle}, {finalangle}")

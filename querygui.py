@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import simpledialog
 
 def choicebetweenangles(angle1, angle2):
     root = tk.Tk()

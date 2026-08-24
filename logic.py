@@ -12,8 +12,8 @@ global Angle1
 global Angle2
 def find_xzangle(coordinateX, coordinateZ):
     angle = math.degrees(math.atan(coordinateZ/coordinateX))
-    if coordinateZ < 0:
-        angle = angle + 180
+    if angle < 0:
+        angle += 360
     return angle
 
 def solve(coordinateX, coordinateZ, strength, angle, displacement):
