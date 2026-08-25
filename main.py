@@ -31,6 +31,7 @@ print("The angle in the 2d plane is", xzangle)
 calculatedvals = logic.solve(coordx, coordy, strength, angle, displacement)
 if strength == True: #Check if the user wanted to find the extension or angle and output accordingly
     print("The extension required is", calculatedvals)
+    send.send(xzangle, angle, calculatedvals)
 else:
     if calculatedvals[0] == 0:
         print("An error occured - invalid values") #add gui when finished
@@ -45,7 +46,4 @@ else:
         finalangle = calculatedvals[0]
     print("Angle to be fired at is", finalangle)
     print("Sending values to Arduino...")
-    send.send(xzangle, finalangle)
-
-# If you need to use the extension value, you will need to modify the send function to accept that value and send it to the Arduino. 
-# eg: send.send(xzangle, finalangle, extension)
+    send.send(xzangle, finalangle, strength)

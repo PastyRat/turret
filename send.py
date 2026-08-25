@@ -15,10 +15,10 @@ def startconnection():
         return 0
 
 
-def send(xzangle, finalangle):
+def send(xzangle, finalangle, extension):
     # Send the angles to the Arduino
-    arduino.write(f"{xzangle},{finalangle}".encode())
-    print(f"Sent angles: {xzangle}, {finalangle}")
+    arduino.write(f"{xzangle},{finalangle},{extension}".encode())
+    print(f"Sent angles: {xzangle}, {finalangle}, {extension}")
     while True:
         line = arduino.readline().decode('utf-8').rstrip()
         print(line)
@@ -28,4 +28,5 @@ if __name__ == "__main__":
     # Example usage
     xzangle = 45.0  # Replace with your calculated xz angle
     finalangle = 30.0  # Replace with your calculated final angle
-    send(xzangle, finalangle)
+    extension = 0.2  # Replace with your calculated extension
+    send(xzangle, finalangle, extension)
