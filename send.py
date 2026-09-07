@@ -20,7 +20,7 @@ def send(xzangle, finalangle, extension):
     arduino.write(f"{xzangle},{finalangle},{extension}".encode())
     print(f"Sent angles: {xzangle}, {finalangle}, {extension}")
     while True:
-        line = arduino.readline().decode('utf-8').rstrip()
+        line = arduino.readline().decode().rstrip()
         print(line)
         if line == "Done":
             break
