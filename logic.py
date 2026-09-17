@@ -11,7 +11,7 @@ tolerance=0.003
 global Angle1
 global Angle2
 def find_xzangle(coordinateX, coordinateZ):
-    angle = math.degrees(math.atan(coordinateZ/coordinateX))
+    angle = math.degrees(math.atan2(coordinateZ, coordinateX))
     if angle < 0:
         angle += 360
     return angle
