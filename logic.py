@@ -4,7 +4,7 @@ p = 1
 C = 0.4
 A = 0.025
 m = 0.4
-k = 900
+k = 12000
 u = 0.3
 g= 9.81
 tolerance=0.003
@@ -16,19 +16,16 @@ def find_xzangle(coordinateX, coordinateZ):
         angle += 360
     return angle
 
-def solve(coordinateX, coordinateZ, strength, angle, displacement):
+def solve(coordinateX, coordinateZ, strength, displacement):
     #coordinateX = float(input("enter x: "))
     #coordinateZ = float(input("enter z: "))
     #h = float(input("enter displacement: "))
     h = displacement
     #Decision = int(input("input band distance and find angle or input angle and find band distance? 1 or 2: "))
-    if angle == True:
-        Decision = 1
-    elif strength == True:
-        Decision = 2
-    else:
-        print("error - no decision made/invalid values")
-    solution = aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, angle, strength)
+    # Hardcode decision
+    Decision = 1
+    angle = 0
+    solution = aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength)
     if Decision == 1:
         T1 =0
         N1=0
@@ -89,7 +86,7 @@ def model(p,C,A,a,m,k,x,u,h,g):
         s = D*interval +s
     return s
 
-def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, selectedangle, strength):
+def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
     global x
     global a
     if Decision == 1:
@@ -109,6 +106,8 @@ def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, selectedangle, 
         return List
        
     else:
+        selectedangle = 0
+        print("this shouldn't ever be ran")
         a = math.radians(float(selectedangle))
         Displacement = (coordinateX**2+coordinateZ**2)**(1/2)
         x1 = 0

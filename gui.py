@@ -98,7 +98,6 @@ def query_strength():
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the extension of the elastic band in meters"))
         except ValueError:
-            # Yeah, I cba to create a new window to show an exception - to do later
             pass
         else:
             correct = True
@@ -110,7 +109,6 @@ def query_angle():
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the angle that you want to fire the turret at"))
         except ValueError:
-            # Yeah, I cba to create a new window to show an exception - to do later
             pass
         else:
             correct = True
@@ -122,7 +120,6 @@ def query_displacement():
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the displacement of the location you are firing to from the turret"))
         except ValueError:
-            # Yeah, I cba to create a new window to show an exception - to do later
             pass
         else:
             correct = True
@@ -267,22 +264,14 @@ def main():
         pygame.display.flip()
         if queryonnextdraw == True:
             time.sleep(0.1)
-            answer = query_option()
-            global strength
-            global angle
-            if answer == 0:
-                strength = query_strength()
-                angle = True
-            else:
-                angle = query_angle()
-                strength = True
+            #answer = query_option() From now only we use a predetermined extension only
             global displacement
             displacement = query_displacement()
             queryonnextdraw = False
     root.destroy()
     pygame.quit()
     if __name__ != "__main__": # Allows the function to return a value when called from another .py
-        list = [grid_x, grid_y, strength, angle, displacement]
+        list = [grid_x, grid_y, displacement]
         return list
 
 # Testing purposes
@@ -290,5 +279,4 @@ if __name__ == "__main__":
     main()
     print(grid_x)
     print(grid_y)
-    print(strength)
     print(displacement)
