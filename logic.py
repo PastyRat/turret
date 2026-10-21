@@ -1,10 +1,11 @@
 import math
 interval = 0.001
 p = 1
-C = 0.4
-A = 0.025
-m = 0.4
-k = 12000
+C = 0.47 #drag coefficient
+#A = 0.025 #surface area of the projectile
+A = (0.0001131/2) #surface area in m
+m = 0.00025 # mass in kg
+k = 12000 # spring constant
 u = 0.3
 g= 9.81
 tolerance=0.003
@@ -65,6 +66,7 @@ def model(p,C,A,a,m,k,x,u,h,g):
         T = V0
         V0=((k*x-m*u*g*(math.cos(a))-(1/2)*p*C*A*(V0**2)-m*g*(math.cos(a)))/m)*interval+V0
         x = x-T*interval
+    V0 = 85 #temp
     Vx = V0*math.cos(a)
     Vy = V0*math.sin(a)
     run = 1
