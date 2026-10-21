@@ -12,17 +12,16 @@ AccelStepper stepper(MotorInterfaceType, STEP_PIN_XY, DIR_PIN_XY); //XY angle
 AccelStepper stepper2(MotorInterfaceType, STEP_PIN_Z, DIR_PIN_Z); //Z angle
 AccelStepper stepper3(MotorInterfaceType, STEP_PIN_EXTENSION, DIR_PIN_EXTENSION); //Extension
 
+// 5000 steps == 1 rotation so 1 degree = (5000/360) steps
 int moveXY(float angle) {
-  float a = (angle / 0.45);
-  int b = round(a);
-  stepper.moveTo(b);
+  long steps = round(angle * (5000.0f/360.0f)); // Long is safer as over 32767 steps will cause an error
+  stepper.moveTo(steps);
   return 0;
 }
-
+// 5000 steps == 1 rotation so 1 degree = (5000/360) steps
 int moveZ(float angle) {
-  float a = (angle / 0.45);
-  int b = round(a);
-  stepper2.moveTo(b);
+  long steps = round(angle * (5000.0f/360.0f));
+  stepper2.moveTo(steps);
   return 0;
 }
 
@@ -47,12 +46,9 @@ void setup() {
 }
 
 void loop() {
-  stepper.run();
-  stepper2.run();
-  stepper3.run();
-
   if (Serial.available() > 0) {
     String msg = Serial.readString();
+    msg.trim();
     Serial.print("Recieved: ");
     Serial.println(msg);
     if (msg == "END") {
@@ -62,7 +58,6 @@ void loop() {
     }
     else {
       // Convert string to xy angle and z angle
-      msg.trim();
       String msg1;
       String msg2;
       String msg3;
@@ -98,7 +93,12 @@ void loop() {
     moveXY(xy);
     moveZ(z);
     extend(extension);
-    }
+    while (stepper.distanceToGo() != 0 || stepper2.distanceToGo() != 0 || stepper3.distanceToGo() != 0) {
+        stepper.run();
+        stepper2.run();
+        stepper3.run();
+      }
     Serial.println("Done");
+    }
   }
 }

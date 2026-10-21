@@ -222,19 +222,14 @@ def main():
                     # So we can query on the next draw, so we can see coords at the same time as popup
                     queryonnextdraw = True
         keys = pygame.key.get_pressed()
-        # Maximum limits for panning the grid to only allow up to 20m 
-        x_min = WIDTH // 2 - 12 * grid_spacing
-        x_max = WIDTH // 2 + 12 * grid_spacing
-        y_min = HEIGHT // 2 - 12 * grid_spacing
-        y_max = HEIGHT // 2 + 12 * grid_spacing
         # Pan the grid with WASD keys
-        if keys[pygame.K_w] and center_y + pan_speed <= y_max:
+        if keys[pygame.K_w]:
             center_y += pan_speed
-        if keys[pygame.K_s] and center_y - pan_speed >= y_min:
+        if keys[pygame.K_s]:
             center_y -= pan_speed
-        if keys[pygame.K_a] and center_x + pan_speed <= x_max:
+        if keys[pygame.K_a]:
             center_x += pan_speed
-        if keys[pygame.K_d] and center_x - pan_speed >= x_min:
+        if keys[pygame.K_d]:
             center_x -= pan_speed
         # Pan the background with arrow keys
         if keys[pygame.K_UP]:
