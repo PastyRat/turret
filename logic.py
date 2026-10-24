@@ -1,14 +1,13 @@
 import math
 interval = 0.001
-p = 1
-C = 0.47 #drag coefficient
-#A = 0.025 #surface area of the projectile
-A = (0.0001131/2) #surface area in m
-m = 0.00025 # mass in kg
-k = 12000 # spring constant
+p = 1.225
+C = 0.4
+A = 0.0025
+m = 0.4
+k = 12000
 u = 0.3
-g= 9.81
-tolerance=0.003
+g= 9.80665
+tolerance=0.001
 global Angle1
 global Angle2
 def find_xzangle(coordinateX, coordinateZ):
@@ -58,15 +57,32 @@ def solve(coordinateX, coordinateZ, strength, displacement):
         else:
             print("no solution within range")
 def model(p,C,A,a,m,k,x,u,h,g):
+    SpringInterval = 0.0001#smaller time step for spring to improve accuracy
     s = 0
     V0 = 0
     y = h
     t= 0
     while x>=0:
-        T = V0
-        V0=((k*x-m*u*g*(math.cos(a))-(1/2)*p*C*A*(V0**2)-m*g*(math.cos(a)))/m)*interval+V0
-        x = x-T*interval
-    V0 = 85 #temp
+        def acceleration(extension,velocity):
+            return (
+                k*extension
+                - m*u*g*math.cos(a)
+                - 0.5*p*C*A*velocity**2
+                - m*g*math.sin(a)
+            ) / m
+        a1 = acceleration(x, V0)
+        x_mid = x - 0.5*V0*SpringInterval
+        v_mid = V0 + 0.5*a1*SpringInterval
+        a_mid = acceleration(x_mid, v_mid)
+        x_new = x - v_mid*SpringInterval
+        v_new = V0 + a_mid*SpringInterval
+        if x_new <= 0:
+            fraction = x / (x - x_new)
+            V0 += fraction*(v_new - V0)
+            x = 0
+            break
+        x = x_new
+        V0 = v_new
     Vx = V0*math.cos(a)
     Vy = V0*math.sin(a)
     run = 1
@@ -133,4 +149,4 @@ def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
             print("Unable to aproximate. Value for extension may work and be used but distance may not round to the same 1cm")
         return x
 if __name__ == "__main__":
-    solve() #this doesnt work rn
+    print(solve(20,20,0.1,0))
