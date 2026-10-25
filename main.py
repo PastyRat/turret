@@ -1,12 +1,12 @@
 import gui
-import logic
+import logicrs as logic
 import querygui
 import send
 
 # Connect to the arduino
-if send.startconnection() == 0:
-    print("Stopping program")
-    exit()
+#if send.startconnection() == 0:
+#    print("Stopping program")
+#    exit()
 
 # Run GUI and get values
 chosenvals = gui.main()
@@ -42,4 +42,4 @@ else:
     finalangle = -finalangle
 print("Angle to be fired at is", finalangle)
 print("Sending values to Arduino...")
-send.send(xzangle, finalangle, strength)
+#send.send(xzangle, finalangle, strength)

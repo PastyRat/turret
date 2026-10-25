@@ -1,5 +1,4 @@
 import pygame
-import time
 
 import tkinter as tk
 from tkinter import simpledialog
@@ -258,7 +257,6 @@ def main():
         
         pygame.display.flip()
         if queryonnextdraw == True:
-            time.sleep(0.1)
             #answer = query_option() From now only we use a predetermined extension only
             global displacement
             displacement = query_displacement()
