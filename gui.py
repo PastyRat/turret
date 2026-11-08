@@ -3,18 +3,17 @@ import pygame
 import tkinter as tk
 from tkinter import simpledialog
 
-# Work around crash that occurs when query strength is called more than once
 root = tk.Tk()
 root.withdraw()
-global queryonnextdraw
 queryonnextdraw = False
 
-# Initialize Pygame
+# Start Pygame
 pygame.init()
 
 # Screen dimensions
-WIDTH, HEIGHT = 700, 700
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+width = 700
+height = 700
+screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Select point to fire at")
 
 # Colors
@@ -24,7 +23,6 @@ GREY = (200, 200, 200)
 LIGHT_GREY = (230, 230, 230)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
-GREEN = (0, 200, 0)
 
 # Import background image
 # Check if we have the real background image, if not use placeholder
@@ -42,29 +40,29 @@ clock = pygame.time.Clock()
 fps = 60
 
 # Center of the screen (0, 0 in our coordinate system)
-center_x = WIDTH // 2
-center_y = HEIGHT // 2
+center_x = width // 2
+center_y = height // 2
 background_offset_x = 0
 background_offset_y = 0
 
 # Grid settings
 grid_spacing = 40  # pixels between grid lines
 selected_point = None  # stored as (grid_x, grid_y)
-pan_speed = 5  # pixels to move the viewport per key press
+pan_speed = 5  # pixels to move the view per key press
 
 # Font for text
 font_small = pygame.font.Font(None, 24)
 font_large = pygame.font.Font(None, 32)
 
 def pixel_to_grid(pixel_x, pixel_y):
-    """Convert pixel coordinates to grid coordinates (0,0 at center)"""
+    #Convert pixel coordinates to grid coordinates (0,0 at center)#
     global grid_x, grid_y
     grid_x = (pixel_x - center_x) / grid_spacing
     grid_y = (center_y - pixel_y) / grid_spacing  # Invert Y because pygame Y increases downward
     return grid_x, grid_y
 
 def grid_to_pixel(grid_x, grid_y):
-    """Convert grid coordinates back to pixel coordinates"""
+    #Convert grid coordinates back to pixel coordinates
     pixel_x = center_x + grid_x * grid_spacing
     pixel_y = center_y - grid_y * grid_spacing
     return pixel_x, pixel_y
@@ -97,7 +95,7 @@ def query_strength():
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the extension of the elastic band in meters"))
         except ValueError:
-            pass
+            pass #Ask again
         else:
             correct = True
     return user_input
@@ -108,7 +106,7 @@ def query_angle():
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the angle that you want to fire the turret at"))
         except ValueError:
-            pass
+            pass #Ask again
         else:
             correct = True
     return user_input
@@ -119,7 +117,7 @@ def query_displacement():
         try:
             user_input = float(simpledialog.askstring("Input", "Enter the displacement of the location you are firing to from the turret"))
         except ValueError:
-            pass
+            pass #Ask again
         else:
             correct = True
     return user_input
@@ -127,48 +125,48 @@ def query_displacement():
 def draw_grid():
     # Draw vertical lines
     x = center_x
-    while x < WIDTH:
-        pygame.draw.line(screen, LIGHT_GREY, (x, 0), (x, HEIGHT), 1)
+    while x < width:
+        pygame.draw.line(screen, LIGHT_GREY, (x, 0), (x, height), 1)
         x += grid_spacing
     
     x = center_x
     while x > 0:
-        pygame.draw.line(screen, LIGHT_GREY, (x, 0), (x, HEIGHT), 1)
+        pygame.draw.line(screen, LIGHT_GREY, (x, 0), (x, height), 1)
         x -= grid_spacing
     
     # Draw horizontal lines
     y = center_y
-    while y < HEIGHT:
-        pygame.draw.line(screen, LIGHT_GREY, (0, y), (WIDTH, y), 1)
+    while y < height:
+        pygame.draw.line(screen, LIGHT_GREY, (0, y), (width, y), 1)
         y += grid_spacing
     
     y = center_y
     while y > 0:
-        pygame.draw.line(screen, LIGHT_GREY, (0, y), (WIDTH, y), 1)
+        pygame.draw.line(screen, LIGHT_GREY, (0, y), (width, y), 1)
         y -= grid_spacing
     
     # Draw X and Y axes (thicker, darker lines)
-    pygame.draw.line(screen, BLACK, (0, center_y), (WIDTH, center_y), 2)  # X axis
-    pygame.draw.line(screen, BLACK, (center_x, 0), (center_x, HEIGHT), 2)  # Y axis
+    pygame.draw.line(screen, BLACK, (0, center_y), (width, center_y), 2)  # X axis
+    pygame.draw.line(screen, BLACK, (center_x, 0), (center_x, height), 2)  # Y axis
     
     # Draw origin point
     pygame.draw.circle(screen, RED, (center_x, center_y), 5)
 
 def draw_labels():
-    """Draw axis labels"""
+    # Draw axis labels
     # X-axis labels (bottom)
     x_start = int((0 - center_x) / grid_spacing) - 1
-    x_end = int((WIDTH - center_x) / grid_spacing) + 1
+    x_end = int((width - center_x) / grid_spacing) + 1
     for i in range(x_start, x_end + 1):
         if i == 0:
             continue
         x_pixel = center_x + i * grid_spacing
-        if 0 <= x_pixel < WIDTH:
+        if 0 <= x_pixel < width:
             label = font_small.render(str(i), True, BLACK)
             screen.blit(label, (x_pixel - 10, center_y + 10))
     
     # Y-axis labels (left side)
-    y_start = int((center_y - HEIGHT) / grid_spacing) - 1
+    y_start = int((center_y - height) / grid_spacing) - 1
     y_end = int(center_y / grid_spacing) + 1
     for i in range(y_start, y_end + 1):
         if i == 0:
@@ -176,13 +174,13 @@ def draw_labels():
             screen.blit(label, (center_x - 20, center_y - 10))
             continue
         y_pixel = center_y - i * grid_spacing
-        if 0 <= y_pixel < HEIGHT:
+        if 0 <= y_pixel < height:
             label = font_small.render(str(i), True, BLACK)
             screen.blit(label, (center_x - 25, y_pixel - 10))
 
 def draw_selected_point():
-    """Draw the selected point and display its coordinates"""
-    if selected_point is not None:
+    #Draw the selected point and display its coordinates
+    if selected_point != None:
         grid_x, grid_y = selected_point
         pixel_x, pixel_y = grid_to_pixel(grid_x, grid_y)
         
@@ -191,8 +189,8 @@ def draw_selected_point():
         pygame.draw.circle(screen, BLACK, (int(pixel_x), int(pixel_y)), 6, 2)
         
         # Draw crosshairs
-        pygame.draw.line(screen, BLUE, (pixel_x, 0), (pixel_x, HEIGHT), 1)
-        pygame.draw.line(screen, BLUE, (0, pixel_y), (WIDTH, pixel_y), 1)
+        pygame.draw.line(screen, BLUE, (pixel_x, 0), (pixel_x, height), 1)
+        pygame.draw.line(screen, BLUE, (0, pixel_y), (width, pixel_y), 1)
         
         # Display coordinates
         coord_text = font_large.render(f"({grid_x:.2f}, {grid_y:.2f})", True, BLUE)
@@ -243,7 +241,7 @@ def main():
         # Clear screen
         screen.fill(GREY)
         
-        # Draw everything
+        # Draw everything in order
         draw_background(background)
         draw_grid()
         draw_labels()
@@ -252,8 +250,8 @@ def main():
         # Instructions
         instructions = font_small.render("Click to select a point and close the window to continue.", True, BLACK)
         instructions2 = font_small.render("Use WASD to pan the grid and arrow keys to pan the background.", True, BLACK)
-        screen.blit(instructions2, (10, HEIGHT - 50))
-        screen.blit(instructions, (10, HEIGHT - 30))
+        screen.blit(instructions2, (10, height - 50))
+        screen.blit(instructions, (10, height - 30))
         
         pygame.display.flip()
         if queryonnextdraw == True:
@@ -267,9 +265,9 @@ def main():
         list = [grid_x, grid_y, displacement]
         return list
 
-# Testing purposes
+# Testing
 if __name__ == "__main__":
     main()
-    print(grid_x)
-    print(grid_y)
-    print(displacement)
+    print("X: " + str(grid_x))
+    print("Y: " + str(grid_y))
+    print("Displacement: " + str(displacement))

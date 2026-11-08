@@ -39,7 +39,7 @@ if calculatedvals[1] != 0:
     finalangle = querygui.choicebetweenangles(calculatedvals[0], calculatedvals[1])
 else:
     finalangle = calculatedvals[0]
-    finalangle = -finalangle
+finalangle = -finalangle
 print("Angle to be fired at is", finalangle)
 print("Sending values to Arduino...")
 send.send(xzangle, finalangle, strength)

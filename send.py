@@ -25,7 +25,7 @@ def send(xzangle, finalangle, extension):
         if line == "Done":
             break
 if __name__ == "__main__":
-    # Example usage
+    # Test
     xzangle = 0.0  # Replace with your calculated xz angle
     finalangle = 0.0  # Replace with your calculated final angle
     extension = 0.0  # Replace with your calculated extension
