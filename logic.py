@@ -1,13 +1,15 @@
 import math
 interval = 0.001
 p = 1.225
-C = 0.4
 A = 0.0025
 m = 0.4
 k = 12000
 u = 0.3
 g= 9.80665
-tolerance=0.001
+tolerance=0.005
+r=((A)/(2*math.pi))**(1/2)
+angleaccuracy = 0.01
+
 global Angle1
 global Angle2
 def find_xzangle(coordinateX, coordinateZ):
@@ -25,7 +27,7 @@ def solve(coordinateX, coordinateZ, strength, displacement):
     # Hardcode decision
     Decision = 1
     angle = 0
-    solution = aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength)
+    solution = aproximate(p,A,m,k,u,h,g,r,Decision,coordinateX,coordinateZ, strength)
     if Decision == 1:
         T1 =0
         N1=0
@@ -56,13 +58,22 @@ def solve(coordinateX, coordinateZ, strength, displacement):
             return x
         else:
             print("no solution within range")
-def model(p,C,A,a,m,k,x,u,h,g):
+def model(p,A,a,m,k,x,u,h,g,r):
     SpringInterval = 0.0001#smaller time step for spring to improve accuracy
     s = 0
     V0 = 0
     y = h
     t= 0
+    Vx = 0
+    Vy = 0
     while x>=0:
+        if (Vx**2+Vy**2)>=10:
+            Re = (p*(Vx**2+Vy**2)*2*r)/18.25
+            C = 24/Re+(2.6*(Re/5))/(1+(Re/5)**1.52)+(0.411*(Re/(2.63*(10**5)))**-7.94)/(1+(Re/(2.63*10**5))**-8)+(0.25*(Re/(10**6)))/(1+(Re/10**6))
+        else:
+            C = 0.455
+            
+        
         def acceleration(extension,velocity):
             return (
                 k*extension
@@ -83,6 +94,8 @@ def model(p,C,A,a,m,k,x,u,h,g):
             break
         x = x_new
         V0 = v_new
+        Vx = V0*math.cos(a)
+    Vy = V0*math.sin(a)
     Vx = V0*math.cos(a)
     Vy = V0*math.sin(a)
     run = 1
@@ -90,6 +103,8 @@ def model(p,C,A,a,m,k,x,u,h,g):
         run = 0
     l=y
     while y>=0 or run != 0:
+        Re = (p*(Vx**2+Vy**2)*2*r)/18.25
+        C = 24/Re+(2.6*(Re/5))/(1+(Re/5)**1.52)+(0.411*(Re/(2.63*10**5))**-7.94)/(1+(Re/(2.63*10**5))**-8)+(0.25*(Re/(10**6)))/(1+(Re/10**6))
         if y >=0 and h <=0 and run == 1:
             run = 0
         if y<l and y<0 and run==1:
@@ -99,12 +114,14 @@ def model(p,C,A,a,m,k,x,u,h,g):
         D = Vx
         Vy = (-g-((p*C*A)/(2*m))*((Vx**2+Vy**2)**(1/2))*Vy)*interval+Vy
         Vx = (-((p*C*A)/(2*m))*((Vx**2+B**2)**(1/2))*Vx)*interval+Vx
+        Vay=(Vy+B)/2
+        Vax=(Vx+D)/2
         l=y
-        y=B*interval+y
-        s = D*interval +s
+        y=Vay*interval+y
+        s = Vax*interval +s
     return s
 
-def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
+def aproximate(p,A,m,k,u,h,g,r,Decision,coordinateX,coordinateZ, strength):
     global x
     global a
     if Decision == 1:
@@ -113,10 +130,11 @@ def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
         x = strength
         Displacement = (coordinateX**2+coordinateZ**2)**(1/2)
         print("distance needed",Displacement)
-        for i in range(0,45001):
+        for i in range(0,int(90/angleaccuracy+1)):
+            print(i)
             Values2=[]
-            angle=i/500
-            value = model(p,C,A,math.radians(angle),m,k,x,u,h,g)
+            angle=i*angleaccuracy
+            value = model(p,A,math.radians(angle),m,k,x,u,h,g,r)
             if abs(value - Displacement)<=tolerance:
                 Values2.append(value)
                 Values2.append(angle)
@@ -132,7 +150,7 @@ def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
         x2 = 0.5
         i=0
         x = (x1+x2)/2
-        value = model(p,C,A,a,m,k,x,u,h,g)
+        value = model(p,C,A,a,m,k,x,u,h,g,r)
         print("distance needed",Displacement)
         while round(value,2) != round(Displacement,2) and i <=4000:
 
@@ -142,11 +160,12 @@ def aproximate(p,C,A,m,k,u,h,g,Decision,coordinateX,coordinateZ, strength):
             if value> Displacement:
                 x2 = x
             x = (x1+x2)/2
-            value = model(p,C,A,a,m,k,x,u,h,g)
+            value = model(p,A,a,m,k,x,u,h,g,r)
            
        
         if i >=4000:
             print("Unable to aproximate. Value for extension may work and be used but distance may not round to the same 1cm")
         return x
 if __name__ == "__main__":
-    print(solve(20,20,0.1,0))
+    print(solve(15,15,0.1,0))
+    print("worked")
