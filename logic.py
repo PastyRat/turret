@@ -1,17 +1,20 @@
 import math
-interval = 0.001
+#Constants
 p = 1.225
 A = 0.0025
-m = 0.4
+m = 0.2
 k = 12000
 u = 0.3
 g= 9.80665
-tolerance=0.005
+tolerance=0.01
 r=((A)/(2*math.pi))**(1/2)
-angleaccuracy = 0.01
-
-global Angle1
-global Angle2
+angleaccuracy = 0.005 #make sure this gives an int if / by 90 for best search
+interval = 0.0005
+springint = 0.000003
+mnest = 0.01
+mspring = 0.1
+mgrav = mnest+(mspring/2)+m # mass of spring accounter for in launch. (1) is its mass the other value is the nest's mass
+meff = mnest+(mspring/3)+m #mass of spring for acceleration
 def find_xzangle(coordinateX, coordinateZ):
     angle = math.degrees(math.atan2(coordinateZ, coordinateX))
     if angle < 0:
@@ -59,71 +62,57 @@ def solve(coordinateX, coordinateZ, strength, displacement):
         else:
             print("no solution within range")
 def model(p,A,a,m,k,x,u,h,g,r):
-    SpringInterval = 0.0001#smaller time step for spring to improve accuracy
-    s = 0
-    V0 = 0
-    y = h
-    t= 0
-    Vx = 0
-    Vy = 0
+    err = 0
+    Vy=0
+    Vx=0
+    s=0
+    y=h
+    V0=0
+    B=0
     while x>=0:
-        if (Vx**2+Vy**2)>=10:
-            Re = (p*(Vx**2+Vy**2)*2*r)/18.25
-            C = 24/Re+(2.6*(Re/5))/(1+(Re/5)**1.52)+(0.411*(Re/(2.63*(10**5)))**-7.94)/(1+(Re/(2.63*10**5))**-8)+(0.25*(Re/(10**6)))/(1+(Re/10**6))
-        else:
-            C = 0.455
-            
+        Re = (p*V0*2*r)/(1.81*10**-5) #viscosity
         
-        def acceleration(extension,velocity):
-            return (
-                k*extension
-                - m*u*g*math.cos(a)
-                - 0.5*p*C*A*velocity**2
-                - m*g*math.sin(a)
-            ) / m
-        a1 = acceleration(x, V0)
-        x_mid = x - 0.5*V0*SpringInterval
-        v_mid = V0 + 0.5*a1*SpringInterval
-        a_mid = acceleration(x_mid, v_mid)
-        x_new = x - v_mid*SpringInterval
-        v_new = V0 + a_mid*SpringInterval
-        if x_new <= 0:
-            fraction = x / (x - x_new)
-            V0 += fraction*(v_new - V0)
-            x = 0
+        if V0<=10:
+            c=0.47
+        else:
+            c = (24.0 / Re) + (2.6 * (Re / 5.0)) / (1.0 + (Re / 5.0)**1.52) + (0.411 * (Re / 2.63e5)**-7.94) / (1.0 + (Re / 2.63e5)**-8.00) + (0.25 * (Re / 1e6)) / (1.0 + (Re / 1e6))
+        V0 = (((k * x) - (mgrav * g * math.sin(a)) - (m * g * math.cos(a) * u) - (0.5 * p * (V0**2) * c * A)) / meff) * springint + V0
+        x=x-((V0+B)/2)*springint
+        B=V0
+    Vx=V0*math.cos(a)
+    Vy=V0*math.sin(a)
+    B=Vy
+    D=Vx
+    fix = 0
+    if y <0:
+        fix = 1
+    while y>= 0 or fix == 1:
+        Re = (p*((Vx**2+Vy**2)**(1/2))*2*r)/(1.81*10**-5)
+        if (Vx**2+Vy**2)**(1/2)<=10:
+            c=0.47
+        else:
+            c = (24.0 / Re) + (2.6 * (Re / 5.0)) / (1.0 + (Re / 5.0)**1.52) + (0.411 * (Re / 2.63e5)**-7.94) / (1.0 + (Re / 2.63e5)**-8.00) + (0.25 * (Re / 1e6)) / (1.0 + (Re / 1e6))
+        Vy = (-g-((p*c*A)/(2*m))*((Vx**2+Vy**2)**(1/2))*Vy)*interval+Vy
+        Vx = (-((p*c*A)/(2*m))*((Vx**2+Vy**2)**(1/2))*Vx)*interval+Vx
+        s = s + ((Vx+D)/2)*0.0005
+        h=y
+        y=y+interval*((Vy+B)/2)
+        B=Vy
+        D=Vx
+        if y<h and fix == 1:
+            err = 1
             break
-        x = x_new
-        V0 = v_new
-        Vx = V0*math.cos(a)
-    Vy = V0*math.sin(a)
-    Vx = V0*math.cos(a)
-    Vy = V0*math.sin(a)
-    run = 1
-    if h > 0:
-        run = 0
-    l=y
-    while y>=0 or run != 0:
-        Re = (p*(Vx**2+Vy**2)*2*r)/18.25
-        C = 24/Re+(2.6*(Re/5))/(1+(Re/5)**1.52)+(0.411*(Re/(2.63*10**5))**-7.94)/(1+(Re/(2.63*10**5))**-8)+(0.25*(Re/(10**6)))/(1+(Re/10**6))
-        if y >=0 and h <=0 and run == 1:
-            run = 0
-        if y<l and y<0 and run==1:
-            return -1
-            break
-        B = Vy
-        D = Vx
-        Vy = (-g-((p*C*A)/(2*m))*((Vx**2+Vy**2)**(1/2))*Vy)*interval+Vy
-        Vx = (-((p*C*A)/(2*m))*((Vx**2+B**2)**(1/2))*Vx)*interval+Vx
-        Vay=(Vy+B)/2
-        Vax=(Vx+D)/2
-        l=y
-        y=Vay*interval+y
-        s = Vax*interval +s
-    return s
+        if y>=0 and fix ==1:
+            fix = 0
+    if err != 1:
+        return s
+    else:
+        return 0
 
 def aproximate(p,A,m,k,u,h,g,r,Decision,coordinateX,coordinateZ, strength):
     global x
-    global a
+    global maxs
+    maxs =0 #max distance
     if Decision == 1:
         List=[]
         #x = float(input("enter band distance: "))
@@ -131,7 +120,6 @@ def aproximate(p,A,m,k,u,h,g,r,Decision,coordinateX,coordinateZ, strength):
         Displacement = (coordinateX**2+coordinateZ**2)**(1/2)
         print("distance needed",Displacement)
         for i in range(0,int(90/angleaccuracy+1)):
-            print(i)
             Values2=[]
             angle=i*angleaccuracy
             value = model(p,A,math.radians(angle),m,k,x,u,h,g,r)
@@ -139,6 +127,8 @@ def aproximate(p,A,m,k,u,h,g,r,Decision,coordinateX,coordinateZ, strength):
                 Values2.append(value)
                 Values2.append(angle)
                 List.append(Values2)
+            if maxs < value:
+                maxs=value
         return List
        
     else:
@@ -167,5 +157,4 @@ def aproximate(p,A,m,k,u,h,g,r,Decision,coordinateX,coordinateZ, strength):
             print("Unable to aproximate. Value for extension may work and be used but distance may not round to the same 1cm")
         return x
 if __name__ == "__main__":
-    print(solve(15,15,0.1,0))
-    print("worked")
+    print(solve(15,20,0.1,0))    

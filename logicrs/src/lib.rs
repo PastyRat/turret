@@ -2,159 +2,135 @@ use pyo3::prelude::*;
 
 #[pymodule]
 mod logicrs {
+    use std::f64::consts::PI;
+    use std::thread;
+
     use pyo3::prelude::*;
 
-    const INTERVAL: f64 = 0.001;
     const P: f64 = 1.225;
-    const C: f64 = 0.4;
     const A: f64 = 0.0025;
-    const M: f64 = 0.4;
+    const M: f64 = 0.2;
     const K: f64 = 12000.0;
     const U: f64 = 0.3;
     const G: f64 = 9.80665;
-    const TOLERANCE: f64 = 0.001;
+    const TOLERANCE: f64 = 0.01;
+    const ANGLE_ACCURACY: f64 = 0.005;
+    const INTERVAL: f64 = 0.0005;
+    const SPRING_INTERVAL: f64 = 0.000003;
+    const M_NEST: f64 = 0.01;
+    const M_SPRING: f64 = 0.1;
+    /// Mass acted on by gravity during launch (half the spring's mass counts).
+    const M_GRAV: f64 = M_NEST + M_SPRING / 2.0 + M;
+    /// Effective mass being accelerated by the spring (a third of the spring's mass counts).
+    const M_EFF: f64 = M_NEST + M_SPRING / 3.0 + M;
+    const AIR_VISCOSITY: f64 = 1.81e-5;
 
-    fn model(p: f64, c: f64, a_value: f64, a: f64, m: f64, k: f64, x: f64, u: f64, h: f64, g: f64) -> f64 {
-        let spring_interval = 0.0001;
-        let mut s = 0.0;
-        let mut v0 = 0.0;
-        let mut y = h;
-        let mut x_value = x;
+    fn radius() -> f64 {
+        (A / (2.0 * PI)).sqrt()
+    }
 
-        while x_value >= 0.0 {
-            let acceleration = |extension: f64, velocity: f64| {
-                (
-                    k * extension
-                    - m * u * g * a.cos()
-                    - 0.5 * p * c * a_value * velocity * velocity
-                    - m * g * a.sin()
-                ) / m
-            };
+    fn drag_coefficient(speed: f64) -> f64 {
+        if speed <= 10.0 {
+            return 0.47;
+        }
+        let re = P * speed * 2.0 * radius() / AIR_VISCOSITY;
+        24.0 / re
+            + (2.6 * (re / 5.0)) / (1.0 + (re / 5.0).powf(1.52))
+            + (0.411 * (re / 2.63e5).powf(-7.94)) / (1.0 + (re / 2.63e5).powf(-8.0))
+            + (0.25 * (re / 1e6)) / (1.0 + re / 1e6)
+    }
 
-            let a1 = acceleration(x_value, v0);
-            let x_mid = x_value - 0.5 * v0 * spring_interval;
-            let v_mid = v0 + 0.5 * a1 * spring_interval;
-            let a_mid = acceleration(x_mid, v_mid);
-            let x_new = x_value - v_mid * spring_interval;
-            let v_new = v0 + a_mid * spring_interval;
+    /// Horizontal distance travelled when launched at angle `a` (radians) with spring
+    /// extension `x` from height `h`. Returns 0 if a projectile starting below the target
+    /// height starts falling before reaching it.
+    fn model(a: f64, mut x: f64, h: f64) -> f64 {
+        let (sin_a, cos_a) = a.sin_cos();
 
-            if x_new <= 0.0 {
-                let fraction = x_value / (x_value - x_new);
-                v0 += fraction * (v_new - v0);
-                break;
-            }
-
-            x_value = x_new;
-            v0 = v_new;
+        let mut v = 0.0;
+        while x >= 0.0 {
+            let v0 = v;
+            let force = K * x
+                - M_GRAV * G * sin_a
+                - M * G * cos_a * U
+                - 0.5 * P * v * v * drag_coefficient(v) * A;
+            v += force / M_EFF * SPRING_INTERVAL;
+            x -= (v + v0) / 2.0 * SPRING_INTERVAL;
         }
 
-        let mut vx = v0 * a.cos();
-        let mut vy = v0 * a.sin();
-        let mut run = if h > 0.0 { 0 } else { 1 };
-        let mut l = y;
+        let mut vx = v * cos_a;
+        let mut vy = v * sin_a;
+        let mut y = h;
+        let mut s = 0.0;
+        let mut below_start = y < 0.0;
 
-        while y >= 0.0 || run != 0 {
-            if y >= 0.0 && h <= 0.0 && run == 1 {
-                run = 0;
-            }
-
-            if y < l && y < 0.0 && run == 1 {
-                return -1.0;
-            }
-
-            let b = vy;
-            let d = vx;
+        while y >= 0.0 || below_start {
+            let (vx0, vy0, y0) = (vx, vy, y);
             let speed = (vx * vx + vy * vy).sqrt();
-            let coeff = (p * c * a_value) / (2.0 * m);
+            let drag = P * drag_coefficient(speed) * A / (2.0 * M);
+            vy += (-G - drag * speed * vy) * INTERVAL;
+            // Uses the already-updated vy, matching logic.py.
+            vx += -drag * (vx * vx + vy * vy).sqrt() * vx * INTERVAL;
+            s += (vx + vx0) / 2.0 * INTERVAL;
+            y += (vy + vy0) / 2.0 * INTERVAL;
 
-            vy = (-g - coeff * speed * vy) * INTERVAL + vy;
-            vx = (-coeff * speed * vx) * INTERVAL + vx;
-            l = y;
-            y = b * INTERVAL + y;
-            s = d * INTERVAL + s;
+            if below_start {
+                if y < y0 {
+                    return 0.0;
+                }
+                if y >= 0.0 {
+                    below_start = false;
+                }
+            }
         }
 
         s
     }
 
-    fn approximate(
-        p: f64,
-        c: f64,
-        a_value: f64,
-        m: f64,
-        k: f64,
-        u: f64,
-        h: f64,
-        g: f64,
-        coordinate_x: f64,
-        coordinate_z: f64,
-        strength: f64,
-    ) -> Vec<Vec<f64>> {
-        
-        let mut list = Vec::new();
-        let x = strength;
-        let displacement = (coordinate_x * coordinate_x + coordinate_z * coordinate_z).sqrt();
+    /// Angles (degrees), ascending, whose landing distance is within TOLERANCE of the target.
+    /// Angles are striped across threads since high angles take longer to simulate.
+    fn approximate(coordinate_x: f64, coordinate_z: f64, strength: f64, h: f64) -> Vec<f64> {
+        let target = (coordinate_x * coordinate_x + coordinate_z * coordinate_z).sqrt();
+        let steps = (90.0 / ANGLE_ACCURACY + 1.0) as usize;
+        let threads = thread::available_parallelism().map_or(1, |n| n.get());
 
-        for i in 0..=45000 {
-            let angle = i as f64 / 500.0;
-            let value = model(p, c, a_value, angle.to_radians(), m, k, x, u, h, g);
-
-            if (value - displacement).abs() <= TOLERANCE {
-                let mut values2 = Vec::new();
-                values2.push(value);
-                values2.push(angle);
-                list.push(values2);
-            }
-        }
-
-        list
+        let mut hits: Vec<usize> = thread::scope(|scope| {
+            let workers: Vec<_> = (0..threads)
+                .map(|t| {
+                    scope.spawn(move || {
+                        (t..steps)
+                            .step_by(threads)
+                            .filter(|&i| {
+                                let angle = i as f64 * ANGLE_ACCURACY;
+                                (model(angle.to_radians(), strength, h) - target).abs() <= TOLERANCE
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                })
+                .collect();
+            workers.into_iter().flat_map(|w| w.join().unwrap()).collect()
+        });
+        hits.sort_unstable();
+        hits.into_iter().map(|i| i as f64 * ANGLE_ACCURACY).collect()
     }
 
     #[pyfunction]
-    fn find_xzangle(x: f64, z: f64) -> PyResult<f64> {
-        let mut angle = z.atan2(x).to_degrees();
-        if angle < 0.0 {
-            angle += 360.0;
-        }
-        Ok(angle)
+    fn find_xzangle(x: f64, z: f64) -> f64 {
+        z.atan2(x).to_degrees().rem_euclid(360.0)
     }
 
+    /// Returns the two candidate launch angles: the mean of the solutions within 1 degree of
+    /// the first, and the mean of the rest. Either is 0 if it has no solutions.
     #[pyfunction]
-    fn solve(x: f64, z: f64, strength: f64, displacement: f64) -> PyResult<Vec<f64>> {
-        let h = displacement;
-        let solution = approximate(P, C, A, M, K, U, h, G, x, z, strength);
+    fn solve(py: Python<'_>, x: f64, z: f64, strength: f64, displacement: f64) -> Vec<f64> {
+        let angles = py.detach(|| approximate(x, z, strength, displacement));
+        let Some(&first) = angles.first() else {
+            return vec![0.0, 0.0];
+        };
 
-        if solution.is_empty() {
-            return Ok(vec![0.0, 0.0]);
-        }
+        let (near, far): (Vec<f64>, Vec<f64>) =
+            angles.into_iter().partition(|angle| (first - angle).abs() <= 1.0);
+        let mean = |v: &[f64]| if v.is_empty() { 0.0 } else { v.iter().sum::<f64>() / v.len() as f64 };
 
-        let mut t1 = 0.0;
-        let mut n1 = 0usize;
-        let mut t2 = 0.0;
-        let mut n2 = 0usize;
-
-        for item in &solution {
-            let angle = item[1];
-            if (solution[0][1] - angle).abs() <= 1.0 {
-                t1 += angle;
-                n1 += 1;
-            } else {
-                t2 += angle;
-                n2 += 1;
-            }
-        }
-
-        let mut angle1 = 0.0;
-        let mut angle2 = 0.0;
-
-        if n1 != 0 {
-            angle1 = t1 / n1 as f64;
-        }
-        if n2 != 0 {
-            angle2 = t2 / n2 as f64;
-        }
-
-        Ok(vec![angle1, angle2])
+        vec![mean(&near), mean(&far)]
     }
 }
-
